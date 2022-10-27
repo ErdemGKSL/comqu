@@ -1,6 +1,6 @@
 ## Example
 ```js
-const { CLI } = require(".");
+const { CLI } = require("comqu");
 
 const cli = new CLI()
   .command({
