@@ -1,11 +1,10 @@
 const readline = require("readline");
 const { plsParseArgs } = require("plsargs");
-const { writeFileSync, appendFileSync } = require("fs");
-const { debounce } = require("lodash")
+const {quickMap} = require("async-and-quick")
 /** @type {readline.Interface} */
 let rl;
 
-const ssh = [, , "nd", "rd"];
+const shh = [, , "nd", "rd"];
 /** @typedef {{ name: string, required: boolean, key?: string }} Option */
 /** @typedef {{ name: string, description: string, aliases: string[], options: Option[], onExecute: (args: { command: Command, trigger: string, argStr: string, parsedArgs: import("plsargs/dist/Result").Result }) => Promise<void>}} Command */
 class CLI {
@@ -13,8 +12,12 @@ class CLI {
   #delimiter;
   /** @type {Command[]} */
   #commands;
-  #started = false;;
+  #started = false;
+  /** @type {string} */
+  #currentLine;
+  #ignoreInput = false;
   constructor() {
+    this.#currentLine = "";
     this.#commands = [];
     /** @type {boolean} */
     this.exit = false;
@@ -43,19 +46,17 @@ class CLI {
     return this.#commands.map(x => ({ ...x }));
   }
 
-  start() {
+  init() {
     if (!this.#started) {
       if (!rl) rl = readline.createInterface({ input: process.stdin });
       this.#started = true;
-      this.#fixConsole();
-      this.#handle();
+      this.#patchInputs();
     }
   }
 
   set delimiter(v) {
-    if (!this.#delimiter) {
-      this.#delimiter = v?.toString?.() || this.delimiter;
-    }
+    this.#delimiter = v?.toString?.() || this.delimiter;
+    this.render?.();
   }
 
   get delimiter() {
@@ -63,11 +64,12 @@ class CLI {
   }
 
   async #handle() {
-    const input = await this.#seekInput();
+    const input = this.#currentLine || "";
 
     if (input == "help") {
       this.#help();
-      return this.#handle();
+      // return this.#handle();
+      return;
     }
 
     /** @type {string} */
@@ -86,61 +88,175 @@ class CLI {
       return false;
     });
     this.#commands.reverse();
-    if (!command) { this.responses.commandNotFound(); return this.#handle(); }
+    if (!command) { return await this.#callbacks.commandNotFound?.(); }
     const argStr = input.slice(commandName.length + 1).trim();
     const args = { argStr, parsedArgs: plsParseArgs(argStr), trigger: commandName, command };
-    const validations = command.options.map(option => {
+    const validations = await quickMap(command.options,async (option) => {
       if (option.required) {
         if (typeof option.key == "string") {
           if (args.parsedArgs.get(option.key)) return true;
           else {
-            this.responses.requiredOption(commandName, `--${option.key} ${option.name}`);
+            await this.#callbacks.requiredOption?.(commandName, `--${option.key} ${option.name}`);
             return false;
           }
         } else {
           if (args.parsedArgs._[option.key]) return true;
           else {
-            this.responses.requiredOption(commandName, `${option.key + 1}${ssh[option.key + 1] || "th"} option`);
+            await this.#callbacks.requiredOption?.(commandName, `${option.key + 1}${shh[option.key + 1] || "th"} option`);
             return false;
           }
         }
       } else return true;
     });
-    if (validations.every(x => x === true)) await command.onExecute(args);
-    else this.responses.commandNotTriggered();
-    if (!this.exit) this.#handle();
+    if (validations.every(x => x === true)) {
+      this.#ignoreInput = true;
+      try {
+        await command.onExecute(args);
+      } catch (err) { console.log(err) };
+      this.#ignoreInput = false;
+    }
+    else await this.#callbacks.commandNotTriggered?.();
+    // if (!this.exit) this.#handle();
   }
-
-  responses = {
+  /** @private */
+  #callbacks = {
     commandNotFound() { console.error("[comqu] Command not found!") },
     requiredOption(cmdName, optName) { console.warn(`[comqu] Option "${optName}" is required for "${cmdName}"`) },
     commandNotTriggered() { console.error("[comqu] Command is not executed.") },
+    render(delimiter, currentLine) { return `${delimiter}${currentLine}` }
   };
 
-  #fixConsole() {
-    const _write = process.stdout.write;
+  /** @def {on(eventName: "render", callback: (delimiter: string, currentLine: string) => string | Promise<string>): void} */
+  /** @def {on(eventName: "requiredOption", callback: (cmdName: string, optName: string) => void | Promise<void>): void} */
+  /**
+   * @param {"commandNotFound" | "requiredOption" | "commandNotTriggered"| "render"} eventName 
+   * @param {() => void | Promise<void>} callback 
+   */
+  on(eventName, callback) {
+    this.#callbacks[eventName] = callback;
+  }
+
+  #patchInputs() {
     const self = this;
-    let lastLineOk = true;
-    const logDelimiter = debounce(() => { _write.call(process.stdout, self.delimiter); lastLineOk = true; }, 10);
-    process.stdout.write = function write(...args) {
-      if (self.delimiter == args[0]) return logDelimiter();
-      if (["\u001b[2K"].includes(args[0])) return _write.call(this, ...args);
-      else {
-        if (lastLineOk) {
-          process.stdout.clearLine();
-          lastLineOk = false;
+    
+    process.stdin.setRawMode(true);
+    process.stdin.resume();
+    process.stdin.setEncoding("utf-8");
+    let lines = [];
+    let lineIndex = 0;
+    let cursorLocation = this.delimiter.length;
+    process.stdin.on("data", /** @param {string} s */(s) => {
+      switch (s) {
+        case "\t": {
+          let commandName;
+          this.#commands.some(x => {
+            let names = [x.name, ...(x.aliases ?? [])];
+            return names.some(a => {
+              if (a.startsWith(this.#currentLine) && a != this.#currentLine) {
+                commandName = a;
+                return true;
+              }
+            });
+          });
+          if (commandName) {
+            this.#currentLine = commandName;
+            cursorLocation = this.delimiter.length + this.#currentLine.length;
+            render();
+          };
+          return;
         }
-        _write.call(this, ...args);
-        logDelimiter();
+        case "\u001b[A": {
+          let nLine = lines[lineIndex - 1];
+          if (typeof nLine === "string") {
+            let cache = this.#currentLine;
+            if (lines.length == lineIndex) lines.push(cache);
+            this.#currentLine = lines[--lineIndex];
+            cursorLocation = this.delimiter.length + this.#currentLine.length;
+            render();
+          }
+          return;
+        }
+        case "\u001b[B": {
+          let nLine = lines[lineIndex + 1];
+          if (typeof nLine === "string") {
+            let cache = this.#currentLine;
+            if (lines.length == lineIndex) lines.push(cache);
+            this.#currentLine = lines[++lineIndex];
+            cursorLocation = this.delimiter.length + this.#currentLine.length;
+            render();
+          }
+          return;
+        }
+        case "\x08": {
+          let cache = [...this.#currentLine];
+          process.stdout.cursorTo(cursorLocation = Math.max(this.delimiter.length, cursorLocation - 1));
+          cache.splice(cursorLocation - this.delimiter.length, 1);
+          this.#currentLine = cache.join("");
+          render();
+          return;
+        }
+        case "\x03": {
+          process.exit(0);
+          return;
+        };
+        case "\x0d": {
+          console.log(self.delimiter + this.#currentLine);
+          this.#handle().then(() => {
+            this.#currentLine = "";
+            render();
+            process.stdout.cursorTo(cursorLocation = this.delimiter.length);
+          });
+          lines.push(this.#currentLine);
+          lines = lines.filter(x => x);
+          lines.push('');
+          lineIndex = lines.length - 1;
+          return;
+        }
+        case "\x1b[D": {
+          process.stdout.cursorTo(cursorLocation = Math.max(this.delimiter.length, cursorLocation - 1));
+          return;
+        }
+        case "\x1b[C": {
+          process.stdout.cursorTo(cursorLocation = Math.min(this.#currentLine.length + this.delimiter.length, cursorLocation + 1))
+          return;
+        }
       }
+      
+      
+      {
+        let cache = [...this.#currentLine];
+        cache.splice(cursorLocation - 2, 0, s);
+        this.#currentLine = cache.join("");
+      }
+      cursorLocation += s.length;
+      process.stdout.cursorTo(cursorLocation - 1);
+      render();
+    });
+
+    function render() {
+      process.stdout.clearLine();
+      process.stdout.cursorTo(0);
+      process.stdout.write(self.#callbacks.render(self.delimiter, self.#currentLine));
+      process.stdout.cursorTo(cursorLocation);
     }
+    this.render = render;
+    render();
+    ["log", "info", "warn", "error", "timeEnd", "table"].forEach((key) => {
+      const _v = console[key];
+      console[key] = function v(...args) {
+        process.stdout.clearLine();
+        process.stdout.cursorTo(0);
+        _v.call(this, ...args);
+        render();
+      }
+    });
+
   }
 
   /** @returns {Promise<string>} */
   #seekInput() {
+    const self = this;
     return new Promise((res) => {
-      process.stdout.write(this.#delimiter);
-
       rl.question("", (input) => {
         res(input);
       });
@@ -178,5 +294,4 @@ class CLI {
   }
 
 }
-
 module.exports.CLI = CLI;

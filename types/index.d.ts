@@ -30,13 +30,11 @@ export class CLI {
             parsedArgs: import("plsargs/dist/Result").Result;
         }) => Promise<void>;
     }[];
-    start(): void;
+    init(): void;
     set delimiter(arg: any);
     get delimiter(): any;
-    responses: {
-        commandNotFound(): void;
-        requiredOption(cmdName: any, optName: any): void;
-        commandNotTriggered(): void;
-    };
+    on(eventName: "render", callback: (delimiter: string, currentLine: string) => string): void
+    on(eventName: "requiredOption", callback: (cmdName: string, optName: string) => void | Promise<void>): void
+    on(eventName: "commandNotFound" | "requiredOption" | "commandNotTriggered" | "render", callback: () => void | Promise<void>): void;
     #private;
 }

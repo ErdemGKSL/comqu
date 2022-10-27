@@ -21,7 +21,12 @@ const cli = new CLI()
     options: [
       {
         name: "param1",
-        required: false,
+        required: true,
+      },
+      {
+        name: "keyparam1",
+        key: "hi",
+        required: true,
       },
       {
         name: "param2",
@@ -29,7 +34,27 @@ const cli = new CLI()
       },
     ]
   })
+  .command({
+    name: "exit",
+    description: "exits the application",
+    async onExecute() {
+      process.exit();
+    },
+  })
+  .command({
+    name: "delimiter",
+    description: "changes the delimiter",
+    async onExecute(a) {
+      cli.delimiter = a.parsedArgs.get(0);
+    },
+    options: [
+      {
+        name: "delimiter",
+        required: true,
+      }
+    ]
+  })
 
 cli.delimiter = "> ";
 
-cli.start();
+cli.init();
