@@ -33,6 +33,7 @@ class CLI {
         if (option.required && options[i - 1] && !options[i - 1].required) throw Error("Required non-key options can not be after non-required non-key option!")
         option.key = i;
       } else {
+        if (option.key.includes(" ")) throw Error("Key option's key can not include whitespace(\" \")!");
         if (options.filter(x => x.key == option.key).length >= 2) throw Error("Key options can not represent same key!");
       }
       return option;
