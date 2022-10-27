@@ -1,0 +1,24 @@
+{
+  "name": "comqu",
+  "version": "1.0.0",
+  "description": "Console Commands Api",
+  "main": "./src/index.js",
+  "types": "./types/index.d.ts",
+  "scripts": {
+    "types": "npx -p typescript tsc src/index.js --declaration --allowJs --emitDeclarationOnly --outDir types --removeComments"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ErdemGKSL/comqu.git"
+  },
+  "author": "ErdemGKSL",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ErdemGKSL/comqu/issues"
+  },
+  "homepage": "https://github.com/ErdemGKSL/comqu#readme",
+  "dependencies": {
+    "lodash": "^4.17.21",
+    "plsargs": "^0.1.6"
+  }
+}
