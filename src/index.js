@@ -143,19 +143,21 @@ class CLI {
     const args = { argStr, parsedArgs: plsParseArgs(argStr), trigger: commandName, command };
     const validations = await quickMap(command.options, async (option) => {
       if (option.required) {
-        if (typeof option.key == "string") {
-          if (args.parsedArgs.get(option.key)) return true;
-          else {
-            await this.#callbacks.requiredOption?.(commandName, `--${option.key} ${option.name}`);
-            return false;
-          }
-        } else {
-          if (args.parsedArgs._[option.key]) return true;
-          else {
-            await this.#callbacks.requiredOption?.(commandName, `${option.key + 1}${shh[option.key + 1] || "th"} option`);
-            return false;
-          }
-        }
+        if (args.parsedArgs.has(option.key)) return true;
+        else return await this.#callbacks.requiredOption?.(commandName, `--${option.key} ${option.name}`), false;
+        // if (typeof option.key == "string") {
+        //   if (args.parsedArgs.get(option.key)) return true;
+        //   else {
+        //     await this.#callbacks.requiredOption?.(commandName, `--${option.key} ${option.name}`);
+        //     return false;
+        //   }
+        // } else {
+        //   if (args.parsedArgs._[option.key]) return true;
+        //   else {
+        //     await this.#callbacks.requiredOption?.(commandName, `${option.key + 1}${shh[option.key + 1] || "th"} option`);
+        //     return false;
+        //   }
+        // }
       } else return true;
     });
     if (validations.every(x => x === true)) {
