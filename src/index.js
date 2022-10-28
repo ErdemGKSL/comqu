@@ -116,8 +116,10 @@ class CLI {
   async #handle() {
     const input = this.#currentLine || "";
 
-    if (input == "help") {
-      this.#help();
+    if (input.startsWith("help")) {
+      let x = input.slice(5).trim();
+      console.log({x})
+      this.#help(x);
       // return this.#handle();
       return;
     }
@@ -352,9 +354,11 @@ class CLI {
 
   }
 
-  #help() {
+  #help(commandName = "") {
     let t = `  comqu commands:\n\n`;
-    Object.entries(this.commandGroups).sort((a, b)=> typeof a.onExecute == "function" ? 0 : 1).forEach(([groupName, item])=>{
+    let cmdsAndGroupsToPrint =  _.get(this.commandGroups, commandName.replaceAll(" ", ".") , this.commandGroups) ;
+    if (typeof cmdsAndGroupsToPrint.onExecute == "function") cmdsAndGroupsToPrint = { [cmdsAndGroupsToPrint.name]: cmdsAndGroupsToPrint };
+    Object.entries(cmdsAndGroupsToPrint).sort((a, b)=> typeof a.onExecute == "function" ? 0 : 1).forEach(([groupName, item])=>{
       if (typeof item.onExecute != "function") {
         t += `   ${color(">", 90)} ${color(`${groupName} *`, 36)}`.padEnd(60, " ")+"  "+color(`command group (has ${Object.keys(item).filter(i=>i!="_default").length} sub-commands)`, 90)+"\n";
       } else {
