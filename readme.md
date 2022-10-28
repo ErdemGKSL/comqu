@@ -12,7 +12,7 @@
 
 ![loading](https://cdn.discordapp.com/attachments/887446333047312464/1035464755273531442/WindowsTerminal_hEXQO3tYYQ.gif)
 ![params](https://cdn.discordapp.com/attachments/781539160720015444/1035507039239163995/unknown.png)
-
+![example](https://cdn.discordapp.com/attachments/887446333047312464/1035701768031576075/WindowsTerminal_OBrBcpTfnk.gif)
 ## Example
 ```js
 const { CLI } = require(".");
