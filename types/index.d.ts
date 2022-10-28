@@ -16,9 +16,10 @@ export type Command = {
     }) => Promise<void>;
 };
 export class CLI {
+    constructor(args: { spinner: import("cli-spinners").SpinnerName }): CLI;
     exit: boolean;
     command(cmd: Command): CLI;
-    get commands(): {
+    commands: {
         name: string;
         description: string;
         aliases: string[];
@@ -30,11 +31,11 @@ export class CLI {
             parsedArgs: import("plsargs/dist/Result").Result;
         }) => Promise<void>;
     }[];
-    init(): void;
-    set delimiter(arg: any);
-    get delimiter(): any;
+    show(): void;
+    delimiter: string;
+    loadingText: string;
     on(eventName: "render", callback: (delimiter: string, currentLine: string) => string): void
     on(eventName: "requiredOption", callback: (cmdName: string, optName: string) => void | Promise<void>): void
-    on(eventName: "commandNotFound" | "requiredOption" | "commandNotTriggered" | "render", callback: () => void | Promise<void>): void;
+    on(eventName: "commandNotFound" | "requiredOption" | "commandNotTriggered" | "render" | "exit", callback: () => void | Promise<void>): void;
     #private;
 }

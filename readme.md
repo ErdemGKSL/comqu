@@ -61,5 +61,5 @@ const cli = new CLI()
 
 cli.delimiter = "> ";
 
-cli.init();
+cli.show();
 ```

@@ -1,6 +1,6 @@
 const { CLI } = require(".");
 
-const cli = new CLI()
+const cli = new CLI({ spinner: "arc" })
   .command({
     name: "test sub-cmd",
     description: "Test description",
@@ -35,10 +35,32 @@ const cli = new CLI()
     ]
   })
   .command({
+    name: "spinner",
+    description: "spinner test",
+    async onExecute() {
+      await new Promise(r=>setTimeout(r, 1000));
+      cli.loadingText = "Omg!";
+      await new Promise(r=>setTimeout(r, 1000));
+      cli.loadingText = "wow!";
+      await new Promise(r=>setTimeout(r, 1000));
+      cli.loadingText = "cool!";
+      await new Promise(r=>setTimeout(r, 1000));
+      cli.loadingText = "xd!";
+      await new Promise(r=>setTimeout(r, 1000));
+    },
+  })
+  .command({
     name: "exit",
     description: "exits the application",
     async onExecute() {
       process.exit();
+    },
+  })
+  .command({
+    name: "clear",
+    description: "clears the console",
+    async onExecute() {
+      console.clear();
     },
   })
   .command({
@@ -57,4 +79,4 @@ const cli = new CLI()
 
 cli.delimiter = "> ";
 
-cli.init();
+cli.show();
