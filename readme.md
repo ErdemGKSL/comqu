@@ -1,10 +1,22 @@
 ![comqu](https://raw.githubusercontent.com/ErdemGKSL/comqu/main/logo.png)
+# Features
+- Command Groups
+- Previous Trigger Memory
+- Customizable Input Screen Render
+- Loading Animation
+- Customizable Loading Message
+- Customizable Callbacks for Errors etc.
+- Async Command (while processing loading animation)
+- Key or Non-Key Parsing On Args (via regex)
+
+![loading](https://cdn.discordapp.com/attachments/887446333047312464/1035464755273531442/WindowsTerminal_hEXQO3tYYQ.gif)
+![params](https://cdn.discordapp.com/attachments/781539160720015444/1035507039239163995/unknown.png)
 
 ## Example
 ```js
-const { CLI } = require("comqu");
+const { CLI } = require(".");
 
-const cli = new CLI()
+const cli = new CLI({ spinner: "arc" })
   .command({
     name: "test sub-cmd",
     description: "Test description",
@@ -39,10 +51,32 @@ const cli = new CLI()
     ]
   })
   .command({
+    name: "spinner",
+    description: "spinner test",
+    async onExecute() {
+      await new Promise(r=>setTimeout(r, 1000));
+      cli.loadingText = "Omg!";
+      await new Promise(r=>setTimeout(r, 1000));
+      cli.loadingText = "wow!";
+      await new Promise(r=>setTimeout(r, 1000));
+      cli.loadingText = "cool!";
+      await new Promise(r=>setTimeout(r, 1000));
+      cli.loadingText = "xd!";
+      await new Promise(r=>setTimeout(r, 1000));
+    },
+  })
+  .command({
     name: "exit",
     description: "exits the application",
     async onExecute() {
       process.exit();
+    },
+  })
+  .command({
+    name: "clear",
+    description: "clears the console",
+    async onExecute() {
+      console.clear();
     },
   })
   .command({
@@ -55,6 +89,20 @@ const cli = new CLI()
       {
         name: "delimiter",
         required: true,
+      }
+    ]
+  })
+  .command({
+    name: "test groups",
+    description: "logs command groups",
+    async onExecute(a) {
+      if (!a.argStr) console.log(cli.commandGroups);
+      else console.log(JSON.stringify(cli.commandGroups, null, 2))
+    },
+    options: [
+      {
+        name: "stringfy",
+        required: false,
       }
     ]
   })

@@ -183,7 +183,7 @@ class CLI {
     commandNotFound() { console.error("[comqu] Command not found!") },
     requiredOption(cmdName, optName) { console.warn(`[comqu] Option "${optName}" is required for "${cmdName}"`) },
     commandNotTriggered() { console.error("[comqu] Command is not executed.") },
-    render(delimiter, currentLine) { return `${delimiter}${currentLine}` },
+    render(delimiter, currentLine) { return `${delimiter}${currentLine || " Insert Command"}` },
     exit() { process.exit() }
   };
 
