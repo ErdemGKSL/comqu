@@ -1,4 +1,4 @@
-![comqu](https://raw.githubusercontent.com/ErdemGKSL/comqu/main/logo.svg)
+![comqu](https://raw.githubusercontent.com/ErdemGKSL/comqu/main/logo.png)
 
 ## Example
 ```js
