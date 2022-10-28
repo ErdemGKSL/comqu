@@ -26,7 +26,7 @@ class CLI {
   #paused = false;
   #maxHistorySize;
 
-  constructor({ spinner = "arc", maxHistorySize = 128 } = {}) {
+  constructor({ spinner = "dots", maxHistorySize = 128 } = {}) {
     this.#maxHistorySize = maxHistorySize;
     this.#currentLine = "";
     this.#commands = [];

@@ -8,6 +8,7 @@
 - Customizable Callbacks for Errors etc.
 - Async Command (while processing loading animation)
 - Key or Non-Key Parsing On Args (via regex)
+- Autocompletion on tab!
 
 ![loading](https://cdn.discordapp.com/attachments/887446333047312464/1035464755273531442/WindowsTerminal_hEXQO3tYYQ.gif)
 ![params](https://cdn.discordapp.com/attachments/781539160720015444/1035507039239163995/unknown.png)
@@ -16,7 +17,7 @@
 ```js
 const { CLI } = require(".");
 
-const cli = new CLI({ spinner: "arc" })
+const cli = new CLI({ spinner: "dots" })
   .command({
     name: "test sub-cmd",
     description: "Test description",

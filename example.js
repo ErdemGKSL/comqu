@@ -1,6 +1,6 @@
 const { CLI } = require(".");
 
-const cli = new CLI({ spinner: "arc" })
+const cli = new CLI({ spinner: "dots" })
   .command({
     name: "test sub-cmd",
     description: "Test description",
