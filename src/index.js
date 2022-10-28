@@ -295,7 +295,7 @@ class CLI {
           return;
         };
         case "\x0d": {
-          console.log(self.delimiter + this.#currentLine);
+          console.log(`\x1b[94m${self.delimiter}\x1b[92m${self.#currentLine}\x1b[0m`);
           this.#handle().then(() => {
             this.#currentLine = "";
             cursorLocation = this.delimiter.length

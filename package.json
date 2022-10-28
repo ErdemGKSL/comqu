@@ -1,6 +1,6 @@
 {
   "name": "comqu",
-  "version": "2.1.2",
+  "version": "2.1.3",
   "description": "Console Commands Api",
   "main": "./src/index.js",
   "types": "./types/index.d.ts",
