@@ -91,8 +91,12 @@ const cli = new CLI({ spinner: "dots" })
     ]
   });
 
-cli.on("render", (del, cl) => `${del}${cl || " Insert Command"}  <`);
+cli.on("render", (del, cl) => `${del}${cl || color("Insert Command", 90)}`);
 
 cli.delimiter = "> ";
 
 cli.show();
+
+function color(str, ...c) {
+  return `${c.map(i=>`\x1b[${i}m`).join("")}${str}\x1b[0m`;
+}

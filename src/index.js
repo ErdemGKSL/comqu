@@ -11,7 +11,7 @@ const shh = [, , "nd", "rd"];
 /** @typedef {{ name: string, required: boolean, key?: string }} Option */
 /** @typedef {{ name: string, description: string, aliases: string[], options: Option[], onExecute: (args: { command: Command, trigger: string, argStr: string, parsedArgs: import("plsargs/dist/Result").Result }) => Promise<void>}} Command */
 class CLI {
-  static COMQU_PREFIX = "\x1b[33m[comqu]\x1b[0m";
+  static COMQU_PREFIX = "[comqu]";
   #delimiter = "~> ";
   /** @type {Command[]} */
   #commands;
@@ -118,7 +118,6 @@ class CLI {
 
     if (input.startsWith("help")) {
       let x = input.slice(5).trim();
-      console.log({x})
       this.#help(x);
       // return this.#handle();
       return;
@@ -191,7 +190,7 @@ class CLI {
     requiredOption(cmdName, optName) { console.warn(CLI.COMQU_PREFIX + ` \x1b[36mOption "${optName}" is required for "${cmdName}"\x1b[0m`) },
     commandNotTriggered() { console.error(CLI.COMQU_PREFIX + " \x1b[36mCommand is not executed.\x1b[0m") },
     render(delimiter, currentLine) { return `${delimiter}${currentLine}` },
-    exit() { process.exit() },
+    exit() { setTimeout(process.exit, 0); return "Exited!"; },
     triggerLog(delimiter, currentLine) { return `${color(delimiter, 90)}${color(currentLine, 36)}` }
   };
 
@@ -294,7 +293,9 @@ class CLI {
           return;
         }
         case "\x03": {
-          this.#callbacks.exit();
+          process.stdout.cursorTo(0);
+          process.stdout.clearLine();
+          process.stdout.write(this.#callbacks.exit());
           return;
         };
         case "\x0d": {
@@ -355,16 +356,25 @@ class CLI {
   }
 
   #help(commandName = "") {
-    let t = `  comqu commands:\n\n`;
+    let t = `  ${color("comqu commands:", 4)}\n\n`;
     let cmdsAndGroupsToPrint =  _.get(this.commandGroups, commandName.replaceAll(" ", ".") , this.commandGroups) ;
     if (typeof cmdsAndGroupsToPrint.onExecute == "function") cmdsAndGroupsToPrint = { [cmdsAndGroupsToPrint.name]: cmdsAndGroupsToPrint };
+    let strArr = [];
     Object.entries(cmdsAndGroupsToPrint).sort((a, b)=> typeof a.onExecute == "function" ? 0 : 1).forEach(([groupName, item])=>{
       if (typeof item.onExecute != "function") {
-        t += `   ${color(">", 90)} ${color(`${groupName} *`, 36)}`.padEnd(60, " ")+"  "+color(`command group (has ${Object.keys(item).filter(i=>i!="_default").length} sub-commands)`, 90)+"\n";
+        strArr.push([
+          `  ${color("$$", 90)} ${color(`${groupName} ...`, 36)}`,
+          color(`command group (has ${Object.keys(item).filter(i=>i!="_default").length} sub-commands)`, 90)
+        ]);
       } else {
-        t += `   ${color("$", 90)} ${color(`${groupName} ${item.options?.map(this.#optionToString)?.join(" ")}`, 36)}`.padEnd(60, " ")+"  "+color(item.description||"", 90)+"\n";
+        strArr.push([
+          `  ${color("$", 90)} ${color(`${commandName}${groupName == "_default" ? "" : ` ${groupName}`} ${item.options?.map(this.#optionToString)?.join(" ")}`, 36)}`,
+          color(item.description||"", 90)
+        ]);
       }
     });
+    let maxLength = Math.max(...strArr.map(i=>i[0].length), 35);
+    t += strArr.map(i=>`${i[0].padEnd(maxLength)}  ${i[1]}`).join("\n");
     console.log(t);
     return t;
   }
@@ -379,8 +389,8 @@ class CLI {
   }
 
 }
-module.exports.CLI = CLI;
 
-function color(str, c) {
-  return `\x1b[${c}m${str}\x1b[0m`;
+module.exports.CLI = CLI;
+function color(str, ...c) {
+  return `${c.map(i=>`\x1b[${i}m`).join("")}${str}\x1b[0m`;
 }
