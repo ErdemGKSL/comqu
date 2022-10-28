@@ -18,12 +18,16 @@ class CLI {
   #started = false;
   /** @type {string} */
   #currentLine;
+  commandHistory = [];
   #loading = false;
   /** @type {import("cli-spinners").Spinner} */
   #spinner;
   #loadingText = "Loading...";
   #paused = false;
-  constructor({ spinner = "arc" } = {}) {
+  #maxHistorySize;
+
+  constructor({ spinner = "arc", maxHistorySize = 128 } = {}) {
+    this.#maxHistorySize = maxHistorySize;
     this.#currentLine = "";
     this.#commands = [];
     /** @type {boolean} */
@@ -183,7 +187,7 @@ class CLI {
     commandNotFound() { console.error("[comqu] Command not found!") },
     requiredOption(cmdName, optName) { console.warn(`[comqu] Option "${optName}" is required for "${cmdName}"`) },
     commandNotTriggered() { console.error("[comqu] Command is not executed.") },
-    render(delimiter, currentLine) { return `${delimiter}${currentLine || " Insert Command"}` },
+    render(delimiter, currentLine) { return `${delimiter}${currentLine}` },
     exit() { process.exit() }
   };
 
@@ -200,21 +204,47 @@ class CLI {
   #patchInputs() {
     const self = this;
     
+    function clampHistorySize() {
+      if (self.#maxHistorySize <= self.commandHistory.length) self.commandHistory.splice(0, self.commandHistory.length - self.#maxHistorySize)
+    }
+
     process.stdin.setRawMode(true);
     process.stdin.resume();
     process.stdin.setEncoding("utf-8");
-    let lines = [];
+    // let this.commandHistory = [];
     let lineIndex = 0;
     let cursorLocation = this.delimiter.length;
+    let lastTab = "";
+    let tabbed = false;
     process.stdin.on("data", /** @param {string} s */(s) => {
       if (this.#loading || this.#paused) return;
       switch (s) {
         case "\t": {
+          if (!tabbed) lastTab = this.#currentLine;
           let commandName;
+          let lastTabFound = false;
+          
           this.#commands.some(x => {
             let names = [x.name, ...(x.aliases ?? [])];
             return names.some(a => {
-              if (a.startsWith(this.#currentLine) && a != this.#currentLine) {
+              if (a.startsWith(lastTab)) { 
+                if (!lastTabFound && tabbed && this.#currentLine == a) {
+                  console.log({a})
+                  lastTabFound = true;
+                  return false;
+                }
+                if (!lastTabFound && this.#currentLine && tabbed) return false;
+                if (this.#currentLine == a) return false;
+                commandName = a;
+                return true;
+              }
+            });
+          });
+
+          if (!commandName && lastTabFound) this.#commands.some(x => {
+            let names = [x.name, ...(x.aliases ?? [])];
+            return names.some(a => {
+              if (a.startsWith(lastTab) && this.#currentLine != a) { 
                 commandName = a;
                 return true;
               }
@@ -222,34 +252,37 @@ class CLI {
           });
           if (commandName) {
             this.#currentLine = commandName;
-            cursorLocation = this.delimiter.length + this.#currentLine.length;
+            cursorLocation = this.delimiter.length + (this.#currentLine.length || 0);
             render();
           };
+          tabbed = true;
           return;
         }
         case "\u001b[A": {
-          let nLine = lines[lineIndex - 1];
+          let nLine = this.commandHistory[lineIndex - 1];
           if (typeof nLine === "string") {
-            let cache = this.#currentLine;
-            if (lines.length == lineIndex) lines.push(cache);
-            this.#currentLine = lines[--lineIndex];
+            // let cache = this.#currentLine;
+            // if (this.commandHistory.length == lineIndex) { this.commandHistory.push(cache); clampHistorySize(); }
+            this.#currentLine = this.commandHistory[--lineIndex];
             cursorLocation = this.delimiter.length + this.#currentLine.length;
             render();
           }
           return;
         }
         case "\u001b[B": {
-          let nLine = lines[lineIndex + 1];
+          let nLine = this.commandHistory[lineIndex + 1];
           if (typeof nLine === "string") {
-            let cache = this.#currentLine;
-            if (lines.length == lineIndex) lines.push(cache);
-            this.#currentLine = lines[++lineIndex];
+            // let cache = this.#currentLine;
+            // if (this.commandHistory.length == lineIndex) {this.commandHistory.push(cache); clampHistorySize(); }
+            this.#currentLine = this.commandHistory[++lineIndex];
             cursorLocation = this.delimiter.length + this.#currentLine.length;
             render();
           }
           return;
         }
         case "\x08": {
+          tabbed = false;
+          lastTab = "";
           let cache = [...this.#currentLine];
           process.stdout.cursorTo(cursorLocation = Math.max(this.delimiter.length, cursorLocation - 1));
           cache.splice(cursorLocation - this.delimiter.length, 1);
@@ -269,10 +302,11 @@ class CLI {
             render();
             // process.stdout.cursorTo();
           });
-          lines.push(this.#currentLine);
-          lines = lines.filter(x => x);
-          lines.push('');
-          lineIndex = lines.length - 1;
+          this.commandHistory.push(this.#currentLine.replaceAll("\u001b[2K", ""));
+          clampHistorySize();
+          this.commandHistory = this.commandHistory.filter(x => x);
+          this.commandHistory.push('');
+          lineIndex = this.commandHistory.length - 1;
           return;
         }
         case "\x1b[D": {
@@ -285,7 +319,8 @@ class CLI {
         }
       }
       
-      
+      tabbed = false;
+      lastTab = "";
       {
         let cache = [...this.#currentLine];
         cache.splice(cursorLocation - this.#delimiter.length, 0, s);

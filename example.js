@@ -13,7 +13,7 @@ const cli = new CLI({ spinner: "arc" })
   .command({
     name: "test",
     description: "Test description",
-    aliases: ["foo"],
+    aliases: [],
     async onExecute({argStr, parsedArgs}) {
       console.log(`RAW ARGS: "${argStr}"`);
       console.log("Parsed", parsedArgs._)
@@ -89,7 +89,9 @@ const cli = new CLI({ spinner: "arc" })
         required: false,
       }
     ]
-  })
+  });
+
+cli.on("render", (del, cl) => `${del}${cl || " Insert Command"}  <`);
 
 cli.delimiter = "> ";
 
