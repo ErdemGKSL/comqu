@@ -11,7 +11,7 @@ const shh = [, , "nd", "rd"];
 /** @typedef {{ name: string, required: boolean, key?: string }} Option */
 /** @typedef {{ name: string, description: string, aliases: string[], options: Option[], onExecute: (args: { command: Command, trigger: string, argStr: string, parsedArgs: import("plsargs/dist/Result").Result }) => Promise<void>}} Command */
 class CLI {
-
+  static COMQU_PREFIX = "\x1b[33m[comqu]\x1b[0m";
   #delimiter = "~> ";
   /** @type {Command[]} */
   #commands;
@@ -185,9 +185,9 @@ class CLI {
   }
   /** @private */
   #callbacks = {
-    commandNotFound() { console.error("[comqu] Command not found!") },
-    requiredOption(cmdName, optName) { console.warn(`[comqu] Option "${optName}" is required for "${cmdName}"`) },
-    commandNotTriggered() { console.error("[comqu] Command is not executed.") },
+    commandNotFound() { console.error(CLI.COMQU_PREFIX + " \x1b[36mCommand not found!\x1b[0m") },
+    requiredOption(cmdName, optName) { console.warn(CLI.COMQU_PREFIX + ` \x1b[36mOption "${optName}" is required for "${cmdName}"\x1b[0m`) },
+    commandNotTriggered() { console.error(CLI.COMQU_PREFIX + " \x1b[36mCommand is not executed.\x1b[0m") },
     render(delimiter, currentLine) { return `${delimiter}${currentLine}` },
     exit() { process.exit() }
   };
