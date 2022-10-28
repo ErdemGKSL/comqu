@@ -17,7 +17,7 @@ export type Command = {
 };
 type CommandGroupMap = { [k: string]: CommandGroupMap | Command };
 export class CLI {
-    constructor(args: { spinner: import("cli-spinners").SpinnerName }): CLI;
+    constructor(args: { spinner: import("cli-spinners").SpinnerName, maxHistorySize?: number }): CLI;
     exit: boolean;
     command(cmd: Command): CLI;
     commandGroups: CommandGroupMap;
