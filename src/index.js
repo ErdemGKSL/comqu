@@ -180,8 +180,7 @@ class CLI {
       };
       if (interval) clearInterval(interval);
       this.#loading = false;
-    }
-    else await this.#callbacks.commandNotTriggered?.();
+    } else await this.#callbacks.commandNotTriggered?.();
     // if (!this.exit) this.#handle();
   }
   /** @private */
