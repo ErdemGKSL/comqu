@@ -2,6 +2,8 @@ const readline = require("readline");
 const { plsParseArgs } = require("plsargs");
 const {quickMap} = require("async-and-quick");
 const spinners = require("cli-spinners");
+const _ = require("lodash");
+const { debounce } = require("lodash");
 /** @type {readline.Interface} */
 let rl;
 
@@ -27,6 +29,8 @@ class CLI {
     /** @type {boolean} */
     this.exit = false;
     this.#spinner = spinners[spinner];
+    this.commandGroups = {};
+    this.fetchCommandGroups = debounce(() => { let x = this.#formatCommandGroups(); this.commandGroups = x; return x; }, 100);
   }
 
   /**
@@ -46,11 +50,28 @@ class CLI {
     });
     this.#commands.push(cmd);
     this.#commands.sort((x, y) => x.name.split(" ").length - y.name.split(" ").length);
+    this.fetchCommandGroups();
     return this;
   }
 
   get commands() {
     return this.#commands.map(x => ({ ...x }));
+  }
+
+  #formatCommandGroups(commands = this.commands, indexToFormat = 0) {
+    const sizeMap = {};
+    const commandGroups = {};
+    commands.forEach((cmd) => {
+      const sizeIndex = cmd.name.split(" ")[indexToFormat];
+      if (!sizeMap[sizeIndex]) sizeMap[sizeIndex] = 1;
+      else sizeMap[sizeIndex] = 1 + sizeMap[sizeIndex];
+    });
+    for (let groupName in sizeMap) {
+      if (groupName == 'undefined') commandGroups['_default'] = commands.find(i => !i.name.split(" ")[indexToFormat]);
+      else if (sizeMap[groupName] === 1) commandGroups[groupName] = commands.find(i => i.name.split(" ")[indexToFormat] == groupName);
+      else commandGroups[groupName] = this.#formatCommandGroups(commands.filter(i => i.name.split(" ")[indexToFormat] == groupName), indexToFormat + 1);
+    }
+    return commandGroups;
   }
 
   show() {
@@ -116,7 +137,7 @@ class CLI {
     if (!command) { return await this.#callbacks.commandNotFound?.(); }
     const argStr = input.slice(commandName.length + 1).trim();
     const args = { argStr, parsedArgs: plsParseArgs(argStr), trigger: commandName, command };
-    const validations = await quickMap(command.options,async (option) => {
+    const validations = await quickMap(command.options, async (option) => {
       if (option.required) {
         if (typeof option.key == "string") {
           if (args.parsedArgs.get(option.key)) return true;
@@ -244,8 +265,9 @@ class CLI {
           console.log(self.delimiter + this.#currentLine);
           this.#handle().then(() => {
             this.#currentLine = "";
+            cursorLocation = this.delimiter.length
             render();
-            process.stdout.cursorTo(cursorLocation = this.delimiter.length);
+            // process.stdout.cursorTo();
           });
           lines.push(this.#currentLine);
           lines = lines.filter(x => x);

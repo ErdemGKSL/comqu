@@ -76,6 +76,20 @@ const cli = new CLI({ spinner: "arc" })
       }
     ]
   })
+  .command({
+    name: "test groups",
+    description: "logs command groups",
+    async onExecute(a) {
+      if (!a.argStr) console.log(cli.commandGroups);
+      else console.log(JSON.stringify(cli.commandGroups, null, 2))
+    },
+    options: [
+      {
+        name: "stringfy",
+        required: false,
+      }
+    ]
+  })
 
 cli.delimiter = "> ";
 
