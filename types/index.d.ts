@@ -38,7 +38,7 @@ export class CLI {
     delimiter: string;
     loadingText: string;
     fetchCommandGroups(): CommandGroupMap;
-    on(eventName: "render", callback: (delimiter: string, currentLine: string) => string): void
+    on(eventName: "render" | "triggerLog", callback: (delimiter: string, currentLine: string) => string): void
     on(eventName: "requiredOption", callback: (cmdName: string, optName: string) => void | Promise<void>): void
     on(eventName: "commandNotFound" | "requiredOption" | "commandNotTriggered" | "render" | "exit", callback: () => void | Promise<void>): void;
     #private;

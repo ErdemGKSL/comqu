@@ -189,13 +189,14 @@ class CLI {
     requiredOption(cmdName, optName) { console.warn(CLI.COMQU_PREFIX + ` \x1b[36mOption "${optName}" is required for "${cmdName}"\x1b[0m`) },
     commandNotTriggered() { console.error(CLI.COMQU_PREFIX + " \x1b[36mCommand is not executed.\x1b[0m") },
     render(delimiter, currentLine) { return `${delimiter}${currentLine}` },
-    exit() { process.exit() }
+    exit() { process.exit() },
+    triggerLog(delimiter, currentLine) { return `${color(delimiter, 90)}${color(currentLine, 36)}` }
   };
 
   /** @def {on(eventName: "render", callback: (delimiter: string, currentLine: string) => string | Promise<string>): void} */
   /** @def {on(eventName: "requiredOption", callback: (cmdName: string, optName: string) => void | Promise<void>): void} */
   /**
-   * @param {"commandNotFound" | "requiredOption" | "commandNotTriggered"| "render" | "exit"} eventName 
+   * @param {"commandNotFound" | "requiredOption" | "commandNotTriggered"| "render" | "exit" | "triggerLog"} eventName 
    * @param {() => void | Promise<void>} callback 
    */
   on(eventName, callback) {
@@ -295,7 +296,7 @@ class CLI {
           return;
         };
         case "\x0d": {
-          console.log(`\x1b[94m${self.delimiter}\x1b[92m${self.#currentLine}\x1b[0m`);
+          console.log(this.#callbacks.triggerLog(this.delimiter, this.#currentLine));
           this.#handle().then(() => {
             this.#currentLine = "";
             cursorLocation = this.delimiter.length
@@ -351,25 +352,17 @@ class CLI {
 
   }
 
-  /**
-   * @returns {string} 
-   */
   #help() {
-    let result = "=== HELP ===";
-    this.#commands.forEach(command => {
-      result += `\n\n  Command: '${command.name}'`;
-      if (command.aliases?.length) result += `\n  Aliases: ${command.aliases.map(x => `'${x}'`).join(", ")}`;
-      if (command.description) result += "\n  Description: " + command.description;
-      let usage = `${command.name}`;
-
-      if (command.options?.length) {
-        command.options.forEach(option => {
-          usage += " " + this.#optionToString(option);
-        })
+    let t = `  comqu commands:\n\n`;
+    Object.entries(this.commandGroups).sort((a, b)=> typeof a.onExecute == "function" ? 0 : 1).forEach(([groupName, item])=>{
+      if (typeof item.onExecute != "function") {
+        t += `   ${color(">", 90)} ${color(`${groupName} *`, 36)}`.padEnd(60, " ")+"  "+color(`command group (has ${Object.keys(item).filter(i=>i!="_default").length} sub-commands)`, 90)+"\n";
+      } else {
+        t += `   ${color("$", 90)} ${color(`${groupName} ${item.options?.map(this.#optionToString)?.join(" ")}`, 36)}`.padEnd(60, " ")+"  "+color(item.description||"", 90)+"\n";
       }
-      result += `\n    Usage: ${usage}`
     });
-    console.log(result)
+    console.log(t);
+    return t;
   }
 
   /**
@@ -383,3 +376,7 @@ class CLI {
 
 }
 module.exports.CLI = CLI;
+
+function color(str, c) {
+  return `\x1b[${c}m${str}\x1b[0m`;
+}
