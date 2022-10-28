@@ -1,3 +1,6 @@
+![Alt text](https://raw.githubusercontent.com/ErdemGKSL/comqu/main/logo.svg)
+<img src="https://raw.githubusercontent.com/ErdemGKSL/comqu/main/logo.svg">
+
 ## Example
 ```js
 const { CLI } = require("comqu");
