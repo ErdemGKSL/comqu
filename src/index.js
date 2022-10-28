@@ -229,7 +229,6 @@ class CLI {
             return names.some(a => {
               if (a.startsWith(lastTab)) { 
                 if (!lastTabFound && tabbed && this.#currentLine == a) {
-                  console.log({a})
                   lastTabFound = true;
                   return false;
                 }
