@@ -21,6 +21,7 @@ export class CLI {
     exit: boolean;
     command(cmd: Command): CLI;
     commandGroups: CommandGroupMap;
+    commandHistory: string[];
     commands: {
         name: string;
         description: string;
