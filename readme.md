@@ -15,7 +15,7 @@
 ![example](https://cdn.discordapp.com/attachments/887446333047312464/1035701768031576075/WindowsTerminal_OBrBcpTfnk.gif)
 ## Example
 ```js
-const { CLI } = require(".");
+const { CLI } = require("comqu");
 
 const cli = new CLI({ spinner: "dots" })
   .command({

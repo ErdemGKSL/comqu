@@ -8,12 +8,13 @@ export type Command = {
     description: string;
     aliases: string[];
     options: Option[];
-    onExecute: (args: {
+    onComplete?(): string;
+    onExecute(args: {
         command: Command;
         trigger: string;
         argStr: string;
         parsedArgs: import("plsargs/dist/Result").Result;
-    }) => Promise<void>;
+    }): Promise<void>;
 };
 type CommandGroupMap = { [k: string]: CommandGroupMap | Command };
 export class CLI {

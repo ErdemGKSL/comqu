@@ -1,6 +1,6 @@
 const readline = require("readline");
 const { plsParseArgs } = require("plsargs");
-const {quickMap} = require("async-and-quick");
+const { quickMap } = require("async-and-quick");
 const spinners = require("cli-spinners");
 const _ = require("lodash");
 const { debounce } = require("lodash");
@@ -167,17 +167,17 @@ class CLI {
       let framesLength = this.#spinner.frames.length;
       process.stdout.clearLine();
       process.stdout.cursorTo(0);
-      let interval = setInterval(()=>{
+      let interval = setInterval(() => {
         process.stdout.clearLine();
         process.stdout.cursorTo(0);
-        process.stdout.write(`${this.#spinner.frames[frame = ((frame + 1) % (framesLength-1))]} ${this.#loadingText}`.trim());
+        process.stdout.write(`${this.#spinner.frames[frame = ((frame + 1) % (framesLength - 1))]} ${this.#loadingText}`.trim());
       }, this.#spinner.interval);
       try {
         await command.onExecute(args);
       } catch (err) {
         clearInterval(interval);
         interval = null;
-        console.log(err) 
+        console.log(err)
       };
       if (interval) clearInterval(interval);
       this.#loading = false;
@@ -206,7 +206,7 @@ class CLI {
 
   #patchInputs() {
     const self = this;
-    
+
     function clampHistorySize() {
       if (self.#maxHistorySize <= self.commandHistory.length) self.commandHistory.splice(0, self.commandHistory.length - self.#maxHistorySize)
     }
@@ -226,11 +226,11 @@ class CLI {
           if (!tabbed) lastTab = this.#currentLine;
           let commandName;
           let lastTabFound = false;
-          
+
           this.#commands.some(x => {
             let names = [x.name, ...(x.aliases ?? [])];
             return names.some(a => {
-              if (a.startsWith(lastTab)) { 
+              if (a.startsWith(lastTab)) {
                 if (!lastTabFound && tabbed && this.#currentLine == a) {
                   lastTabFound = true;
                   return false;
@@ -246,17 +246,36 @@ class CLI {
           if (!commandName && lastTabFound) this.#commands.some(x => {
             let names = [x.name, ...(x.aliases ?? [])];
             return names.some(a => {
-              if (a.startsWith(lastTab) && this.#currentLine != a) { 
+              if (a.startsWith(lastTab) && this.#currentLine != a) {
                 commandName = a;
                 return true;
               }
             });
           });
           if (commandName) {
+            console.log("0")
             this.#currentLine = commandName;
             cursorLocation = this.delimiter.length + (this.#currentLine.length || 0);
             render();
-          };
+          } else {
+            const input = this.#currentLine;
+            /** @type {Command} */
+            const command = this.#commands.reverse().find((cmd) => {
+              if (input.startsWith(cmd.name)) {
+                commandName = cmd.name;
+                return true;
+              }
+              const foundAliases = cmd.aliases?.find(a => input.startsWith(a));
+              if (foundAliases) {
+                commandName = foundAliases;
+                return true;
+              }
+              return false;
+            });
+            this.#commands.reverse();
+            const cmplt = command?.onComplete?.(input.replace(commandName).trim());
+            this.#currentLine = commandName + " " + cmplt;
+          }
           tabbed = true;
           return;
         }
@@ -322,7 +341,7 @@ class CLI {
           return;
         }
       }
-      
+
       tabbed = false;
       lastTab = "";
       {
@@ -357,24 +376,24 @@ class CLI {
 
   #help(commandName = "") {
     let t = `  ${color("comqu commands:", 4)}\n\n`;
-    let cmdsAndGroupsToPrint =  _.get(this.commandGroups, commandName.replaceAll(" ", ".") , this.commandGroups) ;
+    let cmdsAndGroupsToPrint = _.get(this.commandGroups, commandName.replaceAll(" ", "."), this.commandGroups);
     if (typeof cmdsAndGroupsToPrint.onExecute == "function") cmdsAndGroupsToPrint = { [cmdsAndGroupsToPrint.name]: cmdsAndGroupsToPrint };
     let strArr = [];
-    Object.entries(cmdsAndGroupsToPrint).sort((a, b)=> typeof a.onExecute == "function" ? 0 : 1).forEach(([groupName, item])=>{
+    Object.entries(cmdsAndGroupsToPrint).sort((a, b) => typeof a.onExecute == "function" ? 0 : 1).forEach(([groupName, item]) => {
       if (typeof item.onExecute != "function") {
         strArr.push([
           `  ${color("$$", 90)} ${color(`${groupName} ...`, 36)}`,
-          color(`command group (has ${Object.keys(item).filter(i=>i!="_default").length} sub-commands)`, 90)
+          color(`command group (has ${Object.keys(item).filter(i => i != "_default").length} sub-commands)`, 90)
         ]);
       } else {
         strArr.push([
           `  ${color("$", 90)} ${color(`${commandName}${groupName == "_default" ? "" : ` ${groupName}`} ${item.options?.map(this.#optionToString)?.join(" ")}`, 36)}`,
-          color(item.description||"", 90)
+          color(item.description || "", 90)
         ]);
       }
     });
-    let maxLength = Math.max(...strArr.map(i=>i[0].length), 35);
-    t += strArr.map(i=>`${i[0].padEnd(maxLength)}  ${i[1]}`).join("\n");
+    let maxLength = Math.max(...strArr.map(i => i[0].length), 35);
+    t += strArr.map(i => `${i[0].padEnd(maxLength)}  ${i[1]}`).join("\n");
     console.log(t);
     return t;
   }
@@ -392,5 +411,5 @@ class CLI {
 
 module.exports.CLI = CLI;
 function color(str, ...c) {
-  return `${c.map(i=>`\x1b[${i}m`).join("")}${str}\x1b[0m`;
+  return `${c.map(i => `\x1b[${i}m`).join("")}${str}\x1b[0m`;
 }
