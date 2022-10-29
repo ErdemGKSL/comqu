@@ -8,7 +8,7 @@ export type Command = {
     description: string;
     aliases: string[];
     options: Option[];
-    onComplete?(): string;
+    onComplete?(ctx: { commandName: string, argStr: string }): string;
     onExecute(args: {
         command: Command;
         trigger: string;
