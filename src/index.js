@@ -387,7 +387,7 @@ class CLI {
         ]);
       } else {
         strArr.push([
-          `  ${color("$", 90)} ${color(`${commandName}${groupName == "_default" ? "" : ` ${groupName}`} ${item.options?.map(this.#optionToString)?.join(" ")}`, 36)}`,
+          `  ${color("$", 90)} ${color(`${item.name} ${item.options?.map(this.#optionToString)?.join(" ")}`, 36)}`,
           color(item.description || "", 90)
         ]);
       }
