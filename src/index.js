@@ -376,7 +376,7 @@ class CLI {
 
   #help(commandName = "") {
     let t = `  ${color("comqu commands:", 4)}\n\n`;
-    let cmdsAndGroupsToPrint = _.get(this.commandGroups, commandName.replaceAll(" ", "."), this.commandGroups);
+    let cmdsAndGroupsToPrint = _.get(this.commandGroups, commandName.split(" ").filter(x => x).map((v) => `["${v}"]`).join(""), this.commandGroups);
     if (typeof cmdsAndGroupsToPrint.onExecute == "function") cmdsAndGroupsToPrint = { [cmdsAndGroupsToPrint.name]: cmdsAndGroupsToPrint };
     let strArr = [];
     Object.entries(cmdsAndGroupsToPrint).sort((a, b) => typeof a.onExecute == "function" ? 0 : 1).forEach(([groupName, item]) => {
