@@ -273,8 +273,8 @@ class CLI {
               return false;
             });
             this.#commands.reverse();
-            const cmplt = command?.onComplete?.({ commandName ,argStr: input.replace(commandName).trim()});
-            this.#currentLine = commandName + " " + cmplt;
+            const cmplt = command?.onComplete?.({ commandName ,argStr: input.replace(commandName, "").trim()});
+            if (cmplt) this.#currentLine = commandName + " " + cmplt;
           }
           tabbed = true;
           return;
