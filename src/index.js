@@ -274,7 +274,7 @@ class CLI {
             });
             this.#commands.reverse();
             const cmplt = command?.onComplete?.({ commandName ,argStr: input.replace(commandName, "").trim()});
-            if (cmplt) this.#currentLine = commandName + " " + cmplt;
+            if (cmplt) this.#currentLine = commandName + " " + cmplt, cursorLocation = this.delimiter.length + this.#currentLine.length,render();
           }
           tabbed = true;
           return;
