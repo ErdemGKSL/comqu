@@ -8,7 +8,7 @@ export type Command = {
     description: string;
     aliases: string[];
     options: Option[];
-    onComplete?(ctx: { commandName: string, argStr: string }): string;
+    onComplete?(ctx: { commandName: string, argStr: string, parsedArgs: import("plsargs/dist/Result").Result }): string;
     onExecute(args: {
         command: Command;
         trigger: string;

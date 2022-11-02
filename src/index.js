@@ -223,7 +223,9 @@ class CLI {
       if (this.#loading || this.#paused) return;
       switch (s) {
         case "\t": {
-          if (!tabbed) lastTab = this.#currentLine;
+          let currentInput = this.#currentLine.replace("help ", "").trim();
+          let help = this.#currentLine.startsWith("help ") ? "help " : "";
+          if (!tabbed) lastTab = currentInput;
           let commandName;
           let lastTabFound = false;
 
@@ -231,12 +233,12 @@ class CLI {
             let names = [x.name, ...(x.aliases ?? [])];
             return names.some(a => {
               if (a.startsWith(lastTab)) {
-                if (!lastTabFound && tabbed && this.#currentLine == a) {
+                if (!lastTabFound && tabbed && currentInput == a) {
                   lastTabFound = true;
                   return false;
                 }
-                if (!lastTabFound && this.#currentLine && tabbed) return false;
-                if (this.#currentLine == a) return false;
+                if (!lastTabFound && currentInput && tabbed) return false;
+                if (currentInput == a) return false;
                 commandName = a;
                 return true;
               }
@@ -246,19 +248,18 @@ class CLI {
           if (!commandName && lastTabFound) this.#commands.some(x => {
             let names = [x.name, ...(x.aliases ?? [])];
             return names.some(a => {
-              if (a.startsWith(lastTab) && this.#currentLine != a) {
+              if (a.startsWith(lastTab) && currentInput != a) {
                 commandName = a;
                 return true;
               }
             });
           });
           if (commandName) {
-            console.log("0")
-            this.#currentLine = commandName;
+            this.#currentLine = help + commandName;
             cursorLocation = this.delimiter.length + (this.#currentLine.length || 0);
             render();
-          } else {
-            const input = this.#currentLine;
+          } else if (!help) {
+            const input = currentInput;
             /** @type {Command} */
             const command = this.#commands.reverse().find((cmd) => {
               if (input.startsWith(cmd.name)) {
@@ -273,8 +274,9 @@ class CLI {
               return false;
             });
             this.#commands.reverse();
-            const cmplt = command?.onComplete?.({ commandName ,argStr: input.replace(commandName, "").trim()});
-            if (cmplt) this.#currentLine = commandName + " " + cmplt, cursorLocation = this.delimiter.length + this.#currentLine.length,render();
+            const argStr = input.replace(commandName, "").trim()
+            const cmplt = command?.onComplete?.({ commandName, parsedArgs: plsParseArgs(argStr), argStr });
+            if (cmplt) (this.#currentLine = commandName + " " + cmplt), (cursorLocation = this.delimiter.length + this.#currentLine.length), render();
           }
           tabbed = true;
           return;
