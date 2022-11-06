@@ -220,7 +220,7 @@ class CLI {
     let lastTab = "";
     let tabbed = false;
     process.stdin.on("data", /** @param {string} s */(s) => {
-      if (this.#loading || this.#paused) return;
+      if ((this.#loading || this.#paused) && s !== "\x03") return;
       switch (s) {
         case "\t": {
           let currentInput = this.#currentLine.replace("help ", "").trim();
