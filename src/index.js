@@ -405,7 +405,7 @@ class CLI {
    * @returns {string}
    */
   #optionToString(option) {
-    if (typeof option.key == "string") return option.required ? `<--${option.key} ${option.name}>` : `[--${option.key} ${option.name}]`
+    if (typeof option.key == "string") return option.required ? `<--${option.key}${option.name ? ` ${option.name}` : ""}>` : `[--${option.key}${option.name ? ` ${option.name}` : ""}]`
     else return option.required ? `<${option.name}>` : `[${option.name}]`
   }
 
