@@ -1,7 +1,10 @@
 export type Option = {
     name: string;
     required: boolean;
-    key?: string;
+} | {
+    name?: string;
+    required: boolean;
+    key: string;
 };
 export type Command = {
     name: string;
