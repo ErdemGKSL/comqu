@@ -4,6 +4,7 @@ const { quickMap } = require("async-and-quick");
 const spinners = require("cli-spinners");
 const _ = require("lodash");
 const { debounce } = require("lodash");
+const os = require("os");
 /** @type {readline.Interface} */
 let rl;
 
@@ -221,6 +222,9 @@ class CLI {
     let tabbed = false;
     process.stdin.on("data", /** @param {string} s */(s) => {
       if ((this.#loading || this.#paused) && s !== "\x03") return;
+
+      if (os.platform() === "win32" && s === "\x08") s = "\x7F";
+
       switch (s) {
         case "\t": {
           let currentInput = this.#currentLine.replace("help ", "").trim();
@@ -303,7 +307,7 @@ class CLI {
           }
           return;
         }
-        case "\x08": {
+        case "\x7F": {
           tabbed = false;
           lastTab = "";
           let cache = [...this.#currentLine];
