@@ -20,6 +20,7 @@
   "dependencies": {
     "async-and-quick": "^1.0.2",
     "cli-spinners": "^2.7.0",
+    "comqu": "^2.2.8",
     "lodash": "^4.17.21",
     "plsargs": "^0.1.6"
   }
